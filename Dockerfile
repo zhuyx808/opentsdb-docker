@@ -72,6 +72,7 @@ RUN for i in /opt/bin/start_hbase.sh /opt/bin/start_opentsdb.sh /opt/bin/create_
         sed -i "s#::JAVA_HOME::#$JAVA_HOME#g; s#::PATH::#$PATH#g; s#::TSDB_VERSION::#$TSDB_VERSION#g;" $i; \
     done
 
+RUN chmod +x /entrypoint.sh
 
 #4242 is tsdb, rest are hbase ports
 EXPOSE 60000 60010 60030 4242 16010 16070
