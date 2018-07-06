@@ -8,6 +8,9 @@ ENV PATH $PATH:/usr/lib/jvm/java-1.7-openjdk/bin/
 ENV ALPINE_PACKAGES "rsyslog bash openjdk7 make wget gnuplot"
 ENV BUILD_PACKAGES "build-base autoconf automake git python"
 
+# 更新安装源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # Tini is a tiny init that helps when a container is being culled to stop things nicely
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-amd64 /tini
 RUN chmod +x /tini
@@ -17,7 +20,7 @@ ENTRYPOINT ["/tini", "--"]
 RUN apk --update add apk-tools \
     && apk add ${ALPINE_PACKAGES} \
       # repo required for gnuplot \
-      --repository http://dl-cdn.alpinelinux.org/alpine/v3.0/testing/ \
+      --repository http://mirrors.aliyun.com/alpine/v3.0/testing/ \
     && mkdir -p /opt/opentsdb
 
 WORKDIR /opt/opentsdb/
