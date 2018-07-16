@@ -3,10 +3,11 @@ FROM alpine:latest
 ENV TINI_VERSION v0.18.0
 ENV TSDB_VERSION 2.3.1
 ENV HBASE_VERSION 1.4.4
+ENV GNUPLOT_VERSION 5.2.4
 ENV JAVA_HOME /usr/lib/jvm/java-1.7-openjdk
 ENV PATH $PATH:/usr/lib/jvm/java-1.7-openjdk/bin/
-ENV ALPINE_PACKAGES "rsyslog bash openjdk7 make wget gnuplot"
-ENV BUILD_PACKAGES "build-base autoconf automake git python"
+ENV ALPINE_PACKAGES "rsyslog bash openjdk7 make wget libgd libpng libjpeg libwebp libjpeg-turbo cairo pango lua"
+ENV BUILD_PACKAGES "build-base autoconf automake git python cairo-dev pango-dev gd-dev lua-dev readline-dev libpng-dev libjpeg-turbo-dev libwebp-dev"
 
 # 更新安装源
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
@@ -42,9 +43,17 @@ RUN apk add --virtual builddeps \
   && cd build \
   && make install \
   && cd / \
-  && rm -rf /opt/opentsdb/opentsdb-${TSDB_VERSION} \
-  && apk del builddeps \
-  && rm -rf /var/cache/apk/*
+  && rm -rf /opt/opentsdb/opentsdb-${TSDB_VERSION}
+  
+RUN cd /tmp && \
+	wget https://datapacket.dl.sourceforge.net/project/gnuplot/gnuplot/${GNUPLOT_VERSION}/gnuplot-${GNUPLOT_VERSION}.tar.gz && \
+	tar xzf gnuplot-${GNUPLOT_VERSION}.tar.gz && \
+	cd gnuplot-${GNUPLOT_VERSION} && \
+	./configure && \
+	make install && \
+	cd /tmp && rm -rf /tmp/gnuplot-${GNUPLOT_VERSION} && rm /tmp/gnuplot-${GNUPLOT_VERSION}.tar.gz  
+
+RUN apk del builddeps && rm -rf /var/cache/apk/*
 
 #Install HBase and scripts
 RUN mkdir -p /data/hbase /root/.profile.d /opt/downloads
@@ -73,7 +82,9 @@ RUN for i in /opt/bin/start_hbase.sh /opt/bin/start_opentsdb.sh /opt/bin/create_
     done
 
 RUN chmod +x /entrypoint.sh
-
+RUN chmod +x /opt/bin/start_opentsdb.sh
+RUN chmod +x /opt/bin/create_tsdb_tables.sh
+RUN chmod +x /opt/bin/start_hbase.sh
 #4242 is tsdb, rest are hbase ports
 EXPOSE 60000 60010 60030 4242 16010 16070
 
